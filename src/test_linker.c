@@ -11,7 +11,7 @@ int main(int argc, char const *argv[])
 	const char *param_path = "param.cfg";
 	const char *cur_slink_3000 = "param/cur_3000";
 	const char *fur_slink_3000 = "param/fur_3000";
-	char cur_path[256] = {}, fur_path[256] = {};
+	char cur_path[256] = {}, fur_path[256] = {}, tmp_path[256] = {};
 
 	/* init cfg handle */
 	ret = cfg_init_handle(param_path, &handle);
@@ -36,34 +36,32 @@ int main(int argc, char const *argv[])
 
 	/* download path not exist*/
 	if (access(cur_path, F_OK)) {
-
+		memset(cur_path, 0, sizeof(cur_path));
+		ret = cfg_set_value(handle, "cur_3000", cur_path);
+		if (ret)
+			printf("cfg_set_value error: %d\n", ret);
+		else
+			printf("cfg_set_value(cur_3000) %s\n", cur_path);
 	}
+
+	/* unlink symbolic link file */
+	unlink(cur_slink_3000);
+	perror("unlink");
 
 	/* link param folder */
-	if (access(cur_slink_3000, F_OK)) {
-		//if (symlink(cur_path, cur_slink_3000)) {
-		//	perror("symlink error");
-		//	return 0;
-		//} else {
-		//	printf("symlink %s\n", cur_path);
-		//}
-	} else {
-		/* remove file */
-		if (remove(cur_slink_3000)) {
-			perror("remove error");
+	if (strlen(cur_path)) {
+		memset(tmp_path, 0, sizeof(tmp_path));
+		sprintf(tmp_path, "../%s", cur_path);
+		if (symlink(tmp_path, cur_slink_3000)) {
+			perror("symlink error");
+			/* broken symbolic link */
+			//remove(cur_slink_3000);
+			//perror("remove2");
 			return 0;
 		} else {
-			printf("remove %s\n", cur_slink_3000);
+			printf("symlink %s\n", tmp_path);
 		}
 	}
-
-	if (symlink(cur_path, cur_slink_3000)) {
-		perror("symlink error");
-		return 0;
-	} else {
-		printf("symlink %s\n", cur_path);
-	}
-
 
 
 

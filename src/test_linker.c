@@ -2,71 +2,84 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <dirent.h>
+
 #include "config.h"
+
+void printf_dir(const char *path)
+{
+	char buf[128] = {};
+	DIR *dir = opendir(path);
+	struct dirent *ent = NULL;
+
+	if (NULL == dir)
+		return ;
+	while (NULL != (ent = readdir(dir))) {
+		if (!(strcmp(".", ent->d_name)) || !(strcmp("..", ent->d_name)))
+			continue;
+		if (DT_DIR == ent->d_type) {
+			printf("[%s]\n", ent->d_name);
+			sprintf(buf, "%s/%s", path, ent->d_name);
+			printf_dir(buf);
+		} else {
+			printf("%s\n", ent->d_name);
+			//remove(ent->d_name);
+			//perror("remove file");
+		}
+	}
+	closedir(dir);
+	//remove(path);
+	//perror("remove dir");
+}
 
 int main(int argc, char const *argv[])
 {
 	int ret = 0;
-	void *handle = NULL;
+	void *lnk_handle = NULL;
 	const char *param_path = "param.cfg";
 	const char *cur_slink_3000 = "param/cur_3000";
 	const char *fur_slink_3000 = "param/fur_3000";
 	char cur_path[256] = {}, fur_path[256] = {}, tmp_path[256] = {};
 
 	/* init cfg handle */
-	ret = cfg_init_handle(param_path, &handle);
+	//ret = cfg_init_handle(param_path, &lnk_handle);
+	ret = lnk_open(param_path, &lnk_handle);
 	if (ret) {
-		printf("cfg_init_handle error: %d\n", ret);
+		printf("lnk_open error: %d\n", ret);
 		return 0;
 	}
 
 	/* cur 3000 */
-	ret = cfg_get_value(handle, "cur_3000", cur_path);
+	ret = cfg_get_value(lnk_handle, cur_slink_3000, cur_path);
 	if (ret)
 		printf("cfg_get_value error: %d\n", ret);
 	else
-		printf("cfg_get_value(cur_3000) %s\n", cur_path);
+		printf("cfg_get_value(cur_slink_3000) %s\n", cur_path);
 
 	/* fur 3000 */
-	ret = cfg_get_value(handle, "fur_3000", fur_path);
+	ret = cfg_get_value(lnk_handle, fur_slink_3000, fur_path);
 	if (ret)
 		printf("cfg_get_value error: %d\n", ret);
 	else
-		printf("cfg_get_value(fur_3000) %s\n", fur_path);
+		printf("cfg_get_value(fur_slink_3000) %s\n", fur_path);
 
-	/* download path not exist*/
-	if (access(cur_path, F_OK)) {
-		memset(cur_path, 0, sizeof(cur_path));
-		ret = cfg_set_value(handle, "cur_3000", cur_path);
-		if (ret)
-			printf("cfg_set_value error: %d\n", ret);
-		else
-			printf("cfg_set_value(cur_3000) %s\n", cur_path);
+	/* switch directory path */
+	ret = lnk_switch(lnk_handle, cur_slink_3000, fur_slink_3000);
+	if (ret) {
+		printf("lnk_switch error: %d\n", ret);
+		return 0;
 	}
+	printf_dir(cur_slink_3000);
 
-	/* unlink symbolic link file */
-	unlink(cur_slink_3000);
-	perror("unlink");
-
-	/* link param folder */
-	if (strlen(cur_path)) {
-		memset(tmp_path, 0, sizeof(tmp_path));
-		sprintf(tmp_path, "../%s", cur_path);
-		if (symlink(tmp_path, cur_slink_3000)) {
-			perror("symlink error");
-			/* broken symbolic link */
-			//remove(cur_slink_3000);
-			//perror("remove2");
-			return 0;
-		} else {
-			printf("symlink %s\n", tmp_path);
-		}
+	ret = lnk_set(lnk_handle, fur_slink_3000, cur_path);
+	if (ret) {
+		printf("lnk_set error: %d\n", ret);
+		return 0;
 	}
-
-
 
 	/* release cfg handle */
-	ret = cfg_release_handle(&handle);
+	//ret = cfg_release_handle(&lnk_handle);
+	ret = lnk_close(&lnk_handle);
 	if (ret) {
 		printf("cfg_release_handle error: %d\n", ret);
 		return 0;

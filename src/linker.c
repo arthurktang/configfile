@@ -1,4 +1,10 @@
 /*
+ * Copyright (C) 2017 TangKai <kyotk@126.com>
+ * FileName: config.c
+ * Author: TangKai
+ * Version: v0.01
+ * Date: 2017-3-9
+ * Description: according to the configuration file for symbolic link operation and etc
  *
  */
 

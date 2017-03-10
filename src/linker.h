@@ -11,6 +11,9 @@ extern "C" {
 #define UNLINK_SYMBOLIC_ERR				0x04
 #define SYM_LINK_ERR					0x05
 
+int lnk_open(const char *cfgpath, void **lnk_handle);
+int lnk_set(void *lnk_handle, const char *linkpath, const char *dirpath);
+int lnk_close(void **lnk_handle);
 int lnk_switch(void *lnk_handle, const char *dest, const char *src);
 
 #ifdef __cplusplus

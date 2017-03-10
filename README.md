@@ -28,4 +28,7 @@ int symlink(const char *oldpath, const char *newpath);
 int readlink(const char *path, char *buf, size_t bufsiz);
 ```
 ### Process
-to be continue
+1. `lnk_open` 打开.cfg配置文件，加载符号连接路径和目录文件路径，维护lnk_handle；
+2. `lnk_set` 修改目录文件路径；
+3. `lnk_switch` 删除旧符号连接，切换目录文件路径建立新连接；
+4. `lnk_close` 释放lnk_handle占用资源
